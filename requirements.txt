@@ -1,0 +1,5 @@
+pandas
+pandas-ta
+requests
+ccxt
+pytz
