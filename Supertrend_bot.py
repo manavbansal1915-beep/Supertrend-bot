@@ -4,7 +4,6 @@ import pytz
 import pandas as pd
 import ccxt
 
-# ================= CONFIGURATION =================
 SYMBOLS = ["ETH/USDT:USDT", "XAU/USDT"]
 TIMEFRAME = "15m"
 ATR_LENGTH = 20
@@ -17,7 +16,6 @@ START_HOUR = 18
 START_MINUTE = 30
 END_HOUR = 22
 END_MINUTE = 30
-# ==================================================
 
 exchange = ccxt.binance({
     'enableRateLimit': True,
@@ -33,47 +31,41 @@ def send_telegram_alert(message):
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
     payload = {"chat_id": TELEGRAM_CHAT_ID, "text": message, "parse_mode": "Markdown"}
     try:
-        requests.post(url, json=payload, timeout=10)
+        response = requests.post(url, json=payload, timeout=10)
+        print(f"Telegram response status: {response.status_code}")
     except Exception as e:
         print(f"Failed to send alert: {e}")
 
 def calculate_supertrend(df, period=20, multiplier=2.0):
-    """Calculates Supertrend locally using pure pandas to avoid dependency errors."""
     high = df['high']
     low = df['low']
     close = df['close']
 
-    # True Range (TR)
     tr1 = high - low
     tr2 = (high - close.shift(1)).abs()
     tr3 = (low - close.shift(1)).abs()
     tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
     atr = tr.rolling(window=period).mean()
 
-    # Basic Upper and Lower Bands
     hl2 = (high + low) / 2
     basic_ub = hl2 + (multiplier * atr)
     basic_lb = hl2 - (multiplier * atr)
 
     final_ub = basic_ub.copy()
     final_lb = basic_lb.copy()
-    supertrend = pd.Series(0.0, index=df.index)
-    st_direction = pd.Series(1, index=df.index) # 1 for Bullish, -1 for Bearish
+    st_direction = pd.Series(1, index=df.index)
 
     for i in range(period, len(df)):
-        # Final Upper Band
         if basic_ub.iloc[i] < final_ub.iloc[i-1] or close.iloc[i-1] > final_ub.iloc[i-1]:
             final_ub.iloc[i] = basic_ub.iloc[i]
         else:
             final_ub.iloc[i] = final_ub.iloc[i-1]
 
-        # Final Lower Band
         if basic_lb.iloc[i] > final_lb.iloc[i-1] or close.iloc[i-1] < final_lb.iloc[i-1]:
             final_lb.iloc[i] = basic_lb.iloc[i]
         else:
             final_lb.iloc[i] = final_lb.iloc[i-1]
 
-        # Supertrend Direction
         if i == period:
             st_direction.iloc[i] = 1
         else:
@@ -126,6 +118,9 @@ def check_symbol_supertrend(symbol):
         print(f"Error processing {symbol}: {e}")
 
 def main():
+    # TEST LINE: Forces a test notification to Telegram instantly on execution
+    send_telegram_alert("🚨 *Test Alert: Bot is connected successfully!*")
+
     if not is_within_ist_window():
         print("Outside active trading window (18:30 - 22:30 IST). Skipping check.")
         return
