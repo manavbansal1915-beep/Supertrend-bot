@@ -118,9 +118,6 @@ def check_symbol_supertrend(symbol):
         print(f"Error processing {symbol}: {e}")
 
 def main():
-    # TEST LINE: Forces a test notification to Telegram instantly on execution
-    send_telegram_alert("🚨 *Test Alert: Bot is connected successfully!*")
-
     if not is_within_ist_window():
         print("Outside active trading window (18:30 - 22:30 IST). Skipping check.")
         return
