@@ -12,20 +12,10 @@ MULTIPLIER = 2.0
 TELEGRAM_BOT_TOKEN = "9274093019:AAHS6aw0BxoztcDuxbgaUrDiiNS6jmv7M4Y"
 TELEGRAM_CHAT_ID = "6179357654"
 
-START_HOUR = 18
-START_MINUTE = 30
-END_HOUR = 22
-END_MINUTE = 30
-
 exchange = ccxt.binance({
     'enableRateLimit': True,
     'options': {'defaultType': 'future'}
 })
-
-def is_within_ist_window():
-    ist_tz = pytz.timezone('Asia/Kolkata')
-    now_ist = datetime.datetime.now(ist_tz).time()
-    return datetime.time(START_HOUR, START_MINUTE) <= now_ist <= datetime.time(END_HOUR, END_MINUTE)
 
 def send_telegram_alert(message):
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
@@ -118,11 +108,7 @@ def check_symbol_supertrend(symbol):
         print(f"Error processing {symbol}: {e}")
 
 def main():
-    if not is_within_ist_window():
-        print("Outside active trading window (18:30 - 22:30 IST). Skipping check.")
-        return
-
-    print("Inside trading window. Checking Supertrend...")
+    print("Running 24/7 Supertrend check...")
     for symbol in SYMBOLS:
         check_symbol_supertrend(symbol)
 
